@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Requete;
 use App\Models\Service;
+use App\Support\AgentRoleMatrix;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class DashboardController extends Controller
 {
@@ -16,6 +18,8 @@ class DashboardController extends Controller
         }
 
         $service = Service::find($user->service_id);
+        $workspace = AgentRoleMatrix::resolve($service);
+
         $currentQuery = Requete::query()->whereHas('etapeTraitements', function ($query) use ($user) {
             $query->where('service_id', $user->service_id)
                 ->whereNull('date_sortie');
@@ -44,15 +48,50 @@ class DashboardController extends Controller
             ]);
         }
 
-        $recents = (clone $currentQuery)->with('typeRequete')
+        $aTraiter = (clone $currentQuery)->with(['typeRequete', 'etudiant', 'piecesJointes'])
             ->orderByDesc('date_depot')
-            ->limit(6)
+            ->limit(30)
             ->get();
+        foreach ($aTraiter as $requete) {
+            foreach ($requete->piecesJointes as $piece) {
+                $chemin = $piece->chemin_fichier;
+                if (str_starts_with($chemin, 'http://') || str_starts_with($chemin, 'https://') || str_starts_with($chemin, '/')) {
+                    $piece->url = $chemin;
+                } else {
+                    $piece->url = Storage::disk('public')->url($chemin);
+                }
+            }
+        }
+
+        $focus = [];
+        if ($service && $service->isCourrier()) {
+            $focus[] = [
+                'label' => 'Nouvelles requetes a enregistrer',
+                'value' => Requete::whereDoesntHave('etapeTraitements')->count(),
+            ];
+        }
+        if (AgentRoleMatrix::hasFeature($service, 'decision_finale')) {
+            $focus[] = [
+                'label' => 'Dossiers sans decision',
+                'value' => (clone $currentQuery)->count(),
+            ];
+        }
 
         return response()->json([
             'stats' => $stats,
             'par_service' => $parService,
-            'recents' => $recents,
+            'a_traiter' => $aTraiter,
+            'focus' => $focus,
+            'workspace' => [
+                'service_id' => $service?->id,
+                'service_nom' => $service?->nom_service,
+                'service_type' => $service?->type_service,
+                'service_key' => $workspace['service_key'],
+                'title' => $workspace['title'],
+                'description' => $workspace['description'],
+                'features' => $workspace['features'],
+                'quick_actions' => $workspace['quick_actions'],
+            ],
         ]);
     }
 }

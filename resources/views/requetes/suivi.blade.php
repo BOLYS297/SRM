@@ -1,35 +1,35 @@
 @extends('layouts.portal')
 
-@section('title', 'Suivi des requetes | SRM')
+@section('title', 'Suivi des requêtes | SRM')
 
 @section('content')
     <div class="page-head">
         <div>
-            <span class="tag">Suivi</span>
-            <h1>Etat de mes requetes</h1>
-            <p>Consulte le statut et les details.</p>
+            <span class="tag" data-i18n="tracking.tag">Suivi</span>
+            <h1 data-i18n="tracking.title">État de mes requêtes</h1>
+            <p data-i18n="tracking.subtitle">Consulte le statut et les détails.</p>
         </div>
         <div class="form-grid two">
             <div>
-                <label for="statusFilter">Filtre statut</label>
+                <label for="statusFilter" data-i18n="tracking.status_filter">Filtre statut</label>
                 <select id="statusFilter">
-                    <option value="">Tous</option>
-                    <option value="en_attente">En attente</option>
-                    <option value="en_traitement">En traitement</option>
-                    <option value="traitee">Traitee</option>
-                    <option value="rejetee">Rejetee</option>
+                    <option value="" data-i18n="tracking.all">Tous</option>
+                    <option value="en_attente" data-i18n="status.en_attente">En attente</option>
+                    <option value="en_traitement" data-i18n="status.en_traitement">En traitement</option>
+                    <option value="traitee" data-i18n="status.traitee">Traitée</option>
+                    <option value="rejetee" data-i18n="status.rejetee">Rejetée</option>
                 </select>
             </div>
             <div>
-                <label for="searchBox">Recherche</label>
-                <input id="searchBox" type="text" placeholder="Objet ou type">
+                <label for="searchBox" data-i18n="tracking.search">Recherche</label>
+                <input id="searchBox" type="text" data-i18n-placeholder="tracking.search_placeholder" placeholder="Objet ou type">
             </div>
         </div>
         <div class="form-grid two">
             <div>
-                <label for="serviceFilter">Filtre service</label>
+                <label for="serviceFilter" data-i18n="tracking.service_filter">Filtre service</label>
                 <select id="serviceFilter">
-                    <option value="">Tous les services</option>
+                    <option value="" data-i18n="tracking.all_services">Tous les services</option>
                 </select>
             </div>
         </div>
@@ -50,6 +50,8 @@
                 location.href = '/connexion';
                 return;
             }
+
+            applyI18n();
 
             const list = document.getElementById('requetesList');
             const message = document.getElementById('suiviMessage');
@@ -80,26 +82,26 @@
 
                 if (!filtered.length) {
                     list.innerHTML = '';
-                    message.textContent = 'Aucune requete trouvee.';
+                    message.textContent = __('tracking.none_found');
                     return;
                 }
                 message.textContent = '';
                 list.innerHTML = filtered.map((item) => {
-                    const typeLabel = item.type_requete ? item.type_requete.libelle : 'Type inconnu';
-                    const decision = item.decision ? item.decision.resultat : 'En cours';
+                    const typeLabel = item.type_requete ? item.type_requete.libelle : __('request.unknown_type');
+                    const decision = item.decision ? formatDecision(item.decision.resultat) : __('tracking.in_progress');
                     const statusValue = item.statut || 'en_attente';
                     return `
                         <article class="req-card">
                             <div class="req-head">
                                 <div>
-                                    <strong>${escapeHtml(item.objet || 'Sans objet')}</strong>
+                                    <strong>${escapeHtml(item.objet || __('request.no_subject'))}</strong>
                                     <div class="hint">${escapeHtml(typeLabel)}</div>
                                 </div>
-                                <span class="status ${escapeHtml(statusValue)}">${escapeHtml(statusValue)}</span>
+                                <span class="status ${escapeHtml(statusValue)}">${escapeHtml(formatStatus(statusValue))}</span>
                             </div>
-                            <div class="hint">Depot: ${escapeHtml(formatDate(item.date_depot))}</div>
-                            <div class="hint">Decision: ${escapeHtml(decision)}</div>
-                            <button class="btn ghost" data-action="details" data-id="${item.id}">Voir details</button>
+                            <div class="hint">${__('request.deposit_date')}: ${escapeHtml(formatDate(item.date_depot))}</div>
+                            <div class="hint">${__('tracking.decision')}: ${escapeHtml(decision)}</div>
+                            <button class="btn ghost" data-action="details" data-id="${item.id}">${__('action.view_details')}</button>
                             <div id="details-${item.id}" class="hint"></div>
                         </article>
                     `;
@@ -107,11 +109,11 @@
             }
 
             async function loadRequetes() {
-                const serviceId = serviceFilter.value;
-                const url = serviceId ? `/requetes?service_id=${serviceId}` : '/requetes';
+                const selectedServiceId = serviceFilter.value;
+                const url = selectedServiceId ? `/requetes?service_id=${selectedServiceId}` : '/requetes';
                 const response = await apiFetch(url);
                 if (!response.ok) {
-                    message.textContent = 'Erreur chargement.';
+                    message.textContent = __('common.error_loading');
                     return;
                 }
                 items = await response.json();
@@ -127,7 +129,7 @@
                 const filtered = role === 'agent' && serviceId
                     ? data.filter((service) => String(service.id) === String(serviceId))
                     : data;
-                serviceFilter.innerHTML = '<option value="">Tous les services</option>';
+                serviceFilter.innerHTML = `<option value="">${__('tracking.all_services')}</option>`;
                 filtered.forEach((service) => {
                     const option = document.createElement('option');
                     option.value = service.id;
@@ -144,10 +146,10 @@
                 if (!button) return;
                 const id = button.getAttribute('data-id');
                 const panel = document.getElementById(`details-${id}`);
-                panel.textContent = 'Chargement...';
+                panel.textContent = __('common.loading');
                 const response = await apiFetch(`/requetes/${id}`);
                 if (!response.ok) {
-                    panel.textContent = 'Erreur detail.';
+                    panel.textContent = __('tracking.detail_error');
                     return;
                 }
                 const data = await response.json();
@@ -159,14 +161,14 @@
                             ${etapes.map((etape) => `
                                 <div class="timeline-item">
                                     <strong>${escapeHtml(etape.action)}</strong>
-                                    <div class="timeline-meta">${escapeHtml(etape.service ? etape.service.nom_service : 'Service')}</div>
-                                    <div class="timeline-meta">Entree: ${escapeHtml(formatDate(etape.date_entree))}</div>
-                                    <div class="timeline-meta">Sortie: ${escapeHtml(formatDate(etape.date_sortie))}</div>
+                                    <div class="timeline-meta">${escapeHtml(etape.service ? etape.service.nom_service : __('tracking.service'))}</div>
+                                    <div class="timeline-meta">${__('tracking.entry')}: ${escapeHtml(formatDate(etape.date_entree))}</div>
+                                    <div class="timeline-meta">${__('tracking.exit')}: ${escapeHtml(formatDate(etape.date_sortie))}</div>
                                 </div>
                             `).join('')}
                         </div>
                     `
-                    : '<div class="hint">Aucune etape enregistree.</div>';
+                    : `<div class="hint">${__('tracking.no_steps')}</div>`;
 
                 const piecesHtml = pieces.length
                     ? `
@@ -176,23 +178,23 @@
                                     <div class="req-head">
                                         <div>
                                             <strong>${escapeHtml(piece.nom_fichier)}</strong>
-                                            <div class="hint">${escapeHtml(piece.type_piece || 'Fichier')}</div>
+                                            <div class="hint">${escapeHtml(piece.type_piece || __('request.file'))}</div>
                                         </div>
-                                        <a class="btn ghost" href="${escapeHtml(piece.url || piece.chemin_fichier)}" target="_blank" rel="noopener">Telecharger</a>
+                                        <a class="btn ghost" href="${escapeHtml(piece.url || piece.chemin_fichier)}" target="_blank" rel="noopener">${__('common.download')}</a>
                                     </div>
                                 </div>
                             `).join('')}
                         </div>
                     `
-                    : '<div class="hint">Aucune piece jointe.</div>';
+                    : `<div class="hint">${__('tracking.no_attachments')}</div>`;
 
                 panel.innerHTML = `
                     <div>
-                        <strong>Historique</strong>
+                        <strong>${__('tracking.history')}</strong>
                         ${timelineHtml}
                     </div>
                     <div style="margin-top: 12px;">
-                        <strong>Pieces jointes</strong>
+                        <strong>${__('tracking.attachments')}</strong>
                         ${piecesHtml}
                     </div>
                 `;
@@ -204,6 +206,11 @@
 
             loadServices();
             loadRequetes();
+            window.addEventListener('srm:language-changed', () => {
+                applyI18n();
+                loadServices();
+                render();
+            });
         });
     </script>
 @endpush

@@ -19,6 +19,11 @@ class EtapeTraitement extends Model
         'service_id',
     ];
 
+    protected $casts = [
+        'date_entree' => 'datetime',
+        'date_sortie' => 'datetime',
+    ];
+
     public function requete()
     {
         return $this->belongsTo(Requete::class);

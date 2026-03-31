@@ -16,6 +16,7 @@ class Etudiant extends Model
         'date_naissance',
         'telephone',
         'email',
+        'filiere',
     ];
 
     public function requetes()

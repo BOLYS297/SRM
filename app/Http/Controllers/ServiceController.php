@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Service;
+use App\Support\FiliereCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -18,10 +19,15 @@ class ServiceController extends Controller
         $data = $request->validate([
             'nom_service' => ['required', 'string', 'max:255', 'unique:services,nom_service'],
             'type_service' => ['nullable', 'string', 'max:255'],
+            'code_departement' => ['nullable', Rule::in(FiliereCatalog::codes()), 'unique:services,code_departement'],
         ]);
 
         if (empty($data['type_service']) && stripos($data['nom_service'], 'courrier') !== false) {
             $data['type_service'] = 'Courrier';
+        }
+
+        if (($data['type_service'] ?? null) !== 'Departement') {
+            $data['code_departement'] = null;
         }
 
         $service = Service::create($data);
@@ -44,10 +50,19 @@ class ServiceController extends Controller
                 Rule::unique('services', 'nom_service')->ignore($service->id),
             ],
             'type_service' => ['nullable', 'string', 'max:255'],
+            'code_departement' => [
+                'nullable',
+                Rule::in(FiliereCatalog::codes()),
+                Rule::unique('services', 'code_departement')->ignore($service->id),
+            ],
         ]);
 
         if (empty($data['type_service']) && stripos($data['nom_service'], 'courrier') !== false) {
             $data['type_service'] = 'Courrier';
+        }
+
+        if (($data['type_service'] ?? null) !== 'Departement') {
+            $data['code_departement'] = null;
         }
 
         $service->update($data);

@@ -13,6 +13,7 @@ class EtudiantDashboardController extends Controller
         if (!$user || $user->role !== 'etudiant' || !$user->etudiant_id) {
             return response()->json(['message' => 'Acces refuse.'], 403);
         }
+        $user->loadMissing('etudiant');
 
         $stats = [
             'total' => Requete::where('etudiant_id', $user->etudiant_id)->count(),
@@ -31,6 +32,12 @@ class EtudiantDashboardController extends Controller
         return response()->json([
             'stats' => $stats,
             'recents' => $recents,
+            'etudiant' => $user->etudiant ? [
+                'id' => $user->etudiant->id,
+                'nom' => $user->etudiant->nom,
+                'prenom' => $user->etudiant->prenom,
+                'matricule' => $user->etudiant->matricule,
+            ] : null,
         ]);
     }
 }

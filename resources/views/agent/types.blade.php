@@ -39,9 +39,7 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const role = getRole();
-            if (role !== 'agent') {
-                location.href = '/connexion';
+            if (!guardAgentFeature('manage_types')) {
                 return;
             }
 

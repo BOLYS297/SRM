@@ -7,24 +7,18 @@
         <div>
             <span class="tag">Agent</span>
             <h1>Etapes de traitement</h1>
-            <p>Suivi des actions par service.</p>
+            <p>Date entree et date sortie sont calculees automatiquement par le systeme.</p>
         </div>
         <button id="refreshEtapes" class="btn ghost">Actualiser</button>
     </div>
 
     <div class="grid two">
         <section class="card">
-            <h2>Nouvelle etape</h2>
+            <h2>Traiter une requete</h2>
             <form id="etapeForm" class="form-grid">
                 <div>
                     <label for="requete_id">Requete</label>
                     <select id="requete_id" name="requete_id" required>
-                        <option value="">Chargement...</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="service_id">Service</label>
-                    <select id="service_id" name="service_id" required>
                         <option value="">Chargement...</option>
                     </select>
                 </div>
@@ -34,33 +28,24 @@
                         <option value="">Aucun</option>
                     </select>
                 </div>
-                <div class="form-grid two">
-                    <div>
-                        <label for="ordre_etape">Ordre</label>
-                        <input id="ordre_etape" name="ordre_etape" type="number" min="1" required>
-                    </div>
-                    <div>
-                        <label for="action">Action</label>
-                        <input id="action" name="action" type="text" required>
-                    </div>
-                </div>
-                <div class="form-grid two">
-                    <div>
-                        <label for="date_entree">Date entree</label>
-                        <input id="date_entree" name="date_entree" type="datetime-local" required>
-                    </div>
-                    <div>
-                        <label for="date_sortie">Date sortie</label>
-                        <input id="date_sortie" name="date_sortie" type="datetime-local">
-                    </div>
+                <div>
+                    <label for="action">Action</label>
+                    <input id="action" name="action" type="text" required>
                 </div>
                 <div>
                     <label for="observation">Observation</label>
                     <textarea id="observation" name="observation"></textarea>
                 </div>
+                <div class="hint">
+                    - date_entree = date de depot etudiant (premier service) ou date d'envoi du service precedent.
+                    <br>
+                    - date_sortie = date de validation du traitement dans ce formulaire.
+                    <br>
+                    - si "service suivant" est vide, le systeme applique automatiquement le circuit du type de requete.
+                </div>
                 <div id="etapeMessage" class="hint"></div>
-                <button class="btn primary" type="submit">Enregistrer</button>
-                <button class="btn ghost hidden" type="button" id="cancelEditEtape">Annuler</button>
+                <button class="btn primary" type="submit">Valider le traitement</button>
+                <button class="btn ghost hidden" type="button" id="cancelEditEtape">Annuler edition</button>
             </form>
         </section>
         <section class="card accent">
@@ -73,9 +58,7 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const role = getRole();
-            if (role !== 'agent') {
-                location.href = '/connexion';
+            if (!guardAgentFeature('process_etapes')) {
                 return;
             }
 
@@ -84,28 +67,15 @@
             const list = document.getElementById('etapesList');
             const refreshBtn = document.getElementById('refreshEtapes');
             const cancelEdit = document.getElementById('cancelEditEtape');
-            let editingId = null;
-            let requetes = [];
-            let services = [];
             const serviceId = getServiceId();
-
-            function toApiDate(value) {
-                if (!value) return null;
-                return value.replace('T', ' ');
-            }
-
-            function toInputDate(value) {
-                if (!value) return '';
-                return value.replace(' ', 'T').slice(0, 16);
-            }
+            let editingId = null;
 
             function resetForm() {
                 form.reset();
                 editingId = null;
+                form.requete_id.disabled = false;
                 cancelEdit.classList.add('hidden');
-                if (serviceId) {
-                    form.service_id.value = serviceId;
-                }
+                message.textContent = '';
             }
 
             async function loadRefs() {
@@ -114,16 +84,7 @@
                     apiFetch('/requetes'),
                 ]);
                 if (servicesRes.ok) {
-                    services = await servicesRes.json();
-                    const filtered = serviceId ? services.filter((s) => String(s.id) === String(serviceId)) : services;
-                    const options = ['<option value="">Choisir</option>']
-                        .concat(filtered.map((s) => `<option value="${s.id}">${s.nom_service}</option>`));
-                    form.service_id.innerHTML = options.join('');
-                    if (serviceId) {
-                        form.service_id.value = serviceId;
-                        form.service_id.disabled = true;
-                    }
-
+                    const services = await servicesRes.json();
                     const suivantOptions = ['<option value="">Aucun</option>']
                         .concat(services
                             .filter((s) => String(s.id) !== String(serviceId))
@@ -131,7 +92,7 @@
                     form.service_suivant_id.innerHTML = suivantOptions.join('');
                 }
                 if (requetesRes.ok) {
-                    requetes = await requetesRes.json();
+                    const requetes = await requetesRes.json();
                     const options = ['<option value="">Choisir</option>']
                         .concat(requetes.map((r) => `<option value="${r.id}">#${r.id} - ${r.objet || 'Sans objet'}</option>`));
                     form.requete_id.innerHTML = options.join('');
@@ -148,6 +109,7 @@
                 list.innerHTML = data.map((item) => {
                     const serviceName = item.service ? item.service.nom_service : 'Service';
                     const requeteLabel = item.requete ? `#${item.requete.id} ${item.requete.objet || ''}` : `#${item.requete_id}`;
+                    const sortie = item.date_sortie ? formatDate(item.date_sortie) : 'En cours';
                     return `
                         <article class="req-card">
                             <div class="req-head">
@@ -161,7 +123,7 @@
                                 </div>
                             </div>
                             <div class="hint">Ordre: ${item.ordre_etape} | Action: ${item.action}</div>
-                            <div class="hint">Entree: ${formatDate(item.date_entree)} | Sortie: ${formatDate(item.date_sortie)}</div>
+                            <div class="hint">Entree: ${formatDate(item.date_entree)} | Sortie: ${sortie}</div>
                         </article>
                     `;
                 }).join('');
@@ -185,12 +147,10 @@
                     const data = await response.json();
                     editingId = data.id;
                     form.requete_id.value = data.requete_id;
-                    form.service_id.value = data.service_id;
-                    form.ordre_etape.value = data.ordre_etape;
+                    form.requete_id.disabled = true;
                     form.action.value = data.action;
-                    form.date_entree.value = toInputDate(data.date_entree);
-                    form.date_sortie.value = toInputDate(data.date_sortie);
                     form.observation.value = data.observation || '';
+                    form.service_suivant_id.value = '';
                     cancelEdit.classList.remove('hidden');
                 }
             });
@@ -198,18 +158,30 @@
             form.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 message.textContent = '';
-                const payload = {
-                    requete_id: Number(form.requete_id.value),
-                    service_id: Number(form.service_id.value || serviceId),
-                    service_suivant_id: form.service_suivant_id.value ? Number(form.service_suivant_id.value) : null,
-                    ordre_etape: Number(form.ordre_etape.value),
-                    action: form.action.value.trim(),
-                    date_entree: toApiDate(form.date_entree.value),
-                    date_sortie: toApiDate(form.date_sortie.value) || null,
-                    observation: form.observation.value.trim(),
-                };
-                const method = editingId ? 'PUT' : 'POST';
-                const url = editingId ? `/etape-traitements/${editingId}` : '/etape-traitements';
+
+                let payload;
+                let method;
+                let url;
+
+                if (editingId) {
+                    payload = {
+                        action: form.action.value.trim(),
+                        observation: form.observation.value.trim(),
+                        service_suivant_id: form.service_suivant_id.value ? Number(form.service_suivant_id.value) : null,
+                    };
+                    method = 'PUT';
+                    url = `/etape-traitements/${editingId}`;
+                } else {
+                    payload = {
+                        requete_id: Number(form.requete_id.value),
+                        action: form.action.value.trim(),
+                        observation: form.observation.value.trim(),
+                        service_suivant_id: form.service_suivant_id.value ? Number(form.service_suivant_id.value) : null,
+                    };
+                    method = 'POST';
+                    url = '/etape-traitements';
+                }
+
                 const response = await apiFetch(url, {
                     method,
                     body: JSON.stringify(payload),
@@ -219,10 +191,14 @@
                     return;
                 }
                 resetForm();
+                await loadRefs();
                 loadEtapes();
             });
 
-            cancelEdit.addEventListener('click', resetForm);
+            cancelEdit.addEventListener('click', () => {
+                resetForm();
+                loadRefs();
+            });
             refreshBtn.addEventListener('click', loadEtapes);
             loadRefs().then(loadEtapes);
         });

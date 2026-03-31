@@ -12,6 +12,7 @@ class Service extends Model
     protected $fillable = [
         'nom_service',
         'type_service',
+        'code_departement',
     ];
 
     public function etapeTraitements()

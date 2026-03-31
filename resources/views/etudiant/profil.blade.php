@@ -1,41 +1,41 @@
 @extends('layouts.portal')
 
-@section('title', 'Profil etudiant | SRM')
+@section('title', 'Profil étudiant | SRM')
 
 @section('content')
     <div class="page-head">
         <div>
-            <span class="tag">Profil</span>
-            <h1>Mes parametres</h1>
-            <p>Modifie ton telephone, email, ou mot de passe.</p>
+            <span class="tag" data-i18n="profile.tag">Profil</span>
+            <h1 data-i18n="profile.title">Mes paramètres</h1>
+            <p data-i18n="profile.subtitle">Modifie ton téléphone, email ou mot de passe.</p>
         </div>
     </div>
 
     <section class="card">
         <form id="profilForm" class="form-grid two">
             <div>
-                <label for="telephone">Telephone</label>
+                <label for="telephone" data-i18n="field.phone">Téléphone</label>
                 <input id="telephone" name="telephone" type="text" placeholder="699000111">
             </div>
             <div>
-                <label for="email">Email</label>
+                <label for="email" data-i18n="field.email">Email</label>
                 <input id="email" name="email" type="email">
             </div>
             <div>
-                <label for="password">Nouveau mot de passe</label>
-                <input id="password" name="password" type="password">
+                <label for="password" data-i18n="profile.new_password">Nouveau mot de passe</label>
+                <input id="password" name="password" type="password" data-password-toggle>
             </div>
             <div>
-                <label for="password_confirmation">Confirmer mot de passe</label>
-                <input id="password_confirmation" name="password_confirmation" type="password">
+                <label for="password_confirmation" data-i18n="profile.confirm_password">Confirmer le mot de passe</label>
+                <input id="password_confirmation" name="password_confirmation" type="password" data-password-toggle>
             </div>
             <div id="profilMessage" class="hint"></div>
-            <button class="btn primary" type="submit">Enregistrer</button>
+            <button class="btn primary" type="submit" data-i18n="action.save">Enregistrer</button>
         </form>
     </section>
 
     <section class="card accent" style="margin-top: 24px;">
-        <h2>Notifications</h2>
+        <h2 data-i18n="profile.notifications">Notifications</h2>
         <div id="notificationsList" class="list"></div>
     </section>
 @endsection
@@ -49,6 +49,8 @@
                 return;
             }
 
+            applyI18n();
+
             const form = document.getElementById('profilForm');
             const message = document.getElementById('profilMessage');
             const notificationsList = document.getElementById('notificationsList');
@@ -56,7 +58,7 @@
             async function loadProfil() {
                 const response = await apiFetch('/etudiants/me');
                 if (!response.ok) {
-                    message.textContent = 'Erreur chargement.';
+                    message.textContent = __('common.error_loading');
                     return;
                 }
                 const data = await response.json();
@@ -80,34 +82,34 @@
                     body: JSON.stringify(payload),
                 });
                 if (!response.ok) {
-                    message.textContent = 'Erreur mise a jour.';
+                    message.textContent = __('profile.update_error');
                     return;
                 }
                 form.password.value = '';
                 form.password_confirmation.value = '';
-                message.textContent = 'Profil mis a jour.';
+                message.textContent = __('profile.updated');
             });
 
             async function loadNotifications() {
                 const response = await apiFetch('/notifications');
                 if (!response.ok) {
-                    notificationsList.innerHTML = '<p class="hint">Erreur chargement.</p>';
+                    notificationsList.innerHTML = `<p class="hint">${__('common.error_loading')}</p>`;
                     return;
                 }
                 const data = await response.json();
                 if (!data.length) {
-                    notificationsList.innerHTML = '<p class="hint">Aucune notification.</p>';
+                    notificationsList.innerHTML = `<p class="hint">${__('profile.no_notifications')}</p>`;
                     return;
                 }
                 notificationsList.innerHTML = data.map((item) => `
                     <article class="req-card">
                         <div class="req-head">
                             <div>
-                                <strong>Requete #${item.requete_id}</strong>
+                                <strong>${__('request.label')} #${item.requete_id}</strong>
                                 <div class="hint">${item.message}</div>
                             </div>
                             <div>
-                                ${item.read_at ? '<span class="pill">Lu</span>' : '<button class="btn ghost" data-action="read" data-id="' + item.id + '">Marquer lu</button>'}
+                                ${item.read_at ? '<span class="pill">' + __('profile.read') + '</span>' : '<button class="btn ghost" data-action="read" data-id="' + item.id + '">' + __('action.mark_read') + '</button>'}
                             </div>
                         </div>
                         <div class="hint">${formatDate(item.created_at)}</div>
@@ -127,6 +129,7 @@
 
             loadProfil();
             loadNotifications();
+            window.addEventListener('srm:language-changed', loadNotifications);
         });
     </script>
 @endpush

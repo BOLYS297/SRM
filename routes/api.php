@@ -30,16 +30,37 @@ Route::middleware('api.token')->group(function () {
 
     Route::middleware('role:agent')->group(function () {
         Route::get('dashboard/agent', [DashboardController::class, 'agent']);
-        Route::apiResource('agents', AgentController::class)
-            ->parameters(['agents' => 'agent'])
-            ->whereNumber('agent');
-        Route::apiResource('services', ServiceController::class)->except(['index', 'show']);
-        Route::apiResource('types-requetes', TypeRequeteController::class)->except(['index', 'show']);
-        Route::apiResource('etudiants', EtudiantController::class)->whereNumber('etudiant');
-        Route::post('etudiants/{etudiant}/compte', [EtudiantController::class, 'createCompte'])
-            ->whereNumber('etudiant');
-        Route::apiResource('etape-traitements', EtapeTraitementController::class);
-        Route::apiResource('decisions', DecisionController::class);
+
+        Route::middleware('agent.feature:manage_agents')->group(function () {
+            Route::apiResource('agents', AgentController::class)
+                ->parameters(['agents' => 'agent'])
+                ->whereNumber('agent');
+        });
+
+        Route::middleware('agent.feature:manage_services')->group(function () {
+            Route::apiResource('services', ServiceController::class)->except(['index', 'show']);
+        });
+
+        Route::middleware('agent.feature:manage_types')->group(function () {
+            Route::apiResource('types-requetes', TypeRequeteController::class)->except(['index', 'show']);
+        });
+
+        Route::middleware('agent.feature:manage_etudiants')->group(function () {
+            Route::apiResource('etudiants', EtudiantController::class)->whereNumber('etudiant');
+            Route::post('etudiants/{etudiant}/compte', [EtudiantController::class, 'createCompte'])
+                ->whereNumber('etudiant');
+        });
+
+        Route::middleware('agent.feature:process_etapes')->group(function () {
+            Route::apiResource('etape-traitements', EtapeTraitementController::class);
+            Route::post('requetes/{requete}/traiter', [RequeteController::class, 'traiter'])
+                ->whereNumber('requete');
+        });
+
+        Route::middleware('agent.feature:decision_finale')->group(function () {
+            Route::apiResource('decisions', DecisionController::class);
+        });
+
         Route::apiResource('pieces-jointes', PieceJointeController::class)->except(['store']);
     });
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Etudiant;
 use App\Models\User;
+use App\Support\FiliereCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -24,6 +25,7 @@ class EtudiantController extends Controller
             'date_naissance' => ['required', 'date'],
             'telephone' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
+            'filiere' => ['required', Rule::in(FiliereCatalog::codes())],
         ]);
 
         $etudiant = Etudiant::create($data);
@@ -50,6 +52,7 @@ class EtudiantController extends Controller
             'date_naissance' => ['required', 'date'],
             'telephone' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
+            'filiere' => ['required', Rule::in(FiliereCatalog::codes())],
         ]);
 
         $etudiant->update($data);

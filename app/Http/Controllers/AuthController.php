@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\AgentRoleMatrix;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -24,6 +25,11 @@ class AuthController extends Controller
         $plainToken = Str::random(60);
         $user->api_token = hash('sha256', $plainToken);
         $user->save();
+        $user->load('service');
+
+        $workspace = $user->role === 'agent'
+            ? AgentRoleMatrix::resolve($user->service)
+            : null;
 
         return response()->json([
             'token' => $plainToken,
@@ -34,7 +40,11 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'role' => $user->role,
                 'service_id' => $user->service_id,
+                'service_nom' => $user->service?->nom_service,
+                'service_type' => $user->service?->type_service,
                 'etudiant_id' => $user->etudiant_id,
+                'features' => $workspace['features'] ?? [],
+                'service_key' => $workspace['service_key'] ?? null,
             ],
         ]);
     }

@@ -61,8 +61,7 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            if (getRole() !== 'agent') {
-                location.href = '/connexion';
+            if (!guardAgentFeature('decision_finale')) {
                 return;
             }
 

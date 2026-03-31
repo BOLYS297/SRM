@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Etudiant;
+use App\Support\FiliereCatalog;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,6 +22,7 @@ class EtudiantFactory extends Factory
             'date_naissance' => fake()->dateTimeBetween('-30 years', '-18 years')->format('Y-m-d'),
             'telephone' => fake()->optional()->phoneNumber(),
             'email' => fake()->optional()->safeEmail(),
+            'filiere' => fake()->randomElement(FiliereCatalog::codes()),
         ];
     }
 }

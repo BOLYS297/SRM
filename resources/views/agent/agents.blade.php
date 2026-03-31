@@ -33,7 +33,7 @@
                     </div>
                     <div>
                         <label for="password">Mot de passe</label>
-                        <input id="password" name="password" type="password" required>
+                        <input id="password" name="password" type="password" required data-password-toggle>
                     </div>
                 </div>
                 <div id="agentMessage" class="hint"></div>
@@ -52,8 +52,7 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            if (getRole() !== 'agent') {
-                location.href = '/connexion';
+            if (!guardAgentFeature('manage_agents')) {
                 return;
             }
 
