@@ -24,16 +24,6 @@
     </div>
 
     <section class="card" style="margin-top: 24px;">
-        <h2 data-i18n="agent.role_actions">Actions de mon rôle</h2>
-        <div id="actionsList" class="list"></div>
-    </section>
-
-    <section class="card" style="margin-top: 24px;">
-        <h2 data-i18n="agent.focus">Indicateurs cibles</h2>
-        <div id="focusList" class="grid two"></div>
-    </section>
-
-    <section class="card" style="margin-top: 24px;">
         <h2 data-i18n="agent.to_process">Requêtes à traiter</h2>
         <div id="traitementMessage" class="hint"></div>
         <div id="toProcessList" class="list"></div>
@@ -51,8 +41,6 @@
 
             const statsGrid = document.getElementById('statsGrid');
             const servicesStats = document.getElementById('servicesStats');
-            const actionsList = document.getElementById('actionsList');
-            const focusList = document.getElementById('focusList');
             const toProcessList = document.getElementById('toProcessList');
             const traitementMessage = document.getElementById('traitementMessage');
             const refreshBtn = document.getElementById('refreshDashboard');
@@ -132,11 +120,17 @@
                 const workspace = data.workspace || {};
                 const stats = data.stats || {};
 
+                function translateWorkspaceText(kind, key, fallback) {
+                    const translationKey = `agent.workspace.${key}.${kind}`;
+                    const translated = __(translationKey);
+                    return translated === translationKey ? fallback : translated;
+                }
+
                 if (workspace.title) {
-                    workspaceTitle.textContent = workspace.title;
+                    workspaceTitle.textContent = translateWorkspaceText('title', workspace.service_key, workspace.title);
                 }
                 if (workspace.description) {
-                    workspaceDescription.textContent = workspace.description;
+                    workspaceDescription.textContent = translateWorkspaceText('description', workspace.service_key, workspace.description);
                 }
                 if (Array.isArray(workspace.features)) {
                     setAgentFeatures(workspace.features);
@@ -152,6 +146,12 @@
                 }
                 updateNavByRole();
                 updateAuthUI();
+
+                // Masquer la section "Requêtes à traiter" pour les agents avec decision_finale
+                const toProcessSection = document.querySelector('section:has(#toProcessList)');
+                if (toProcessSection && workspace.features.includes('decision_finale')) {
+                    toProcessSection.style.display = 'none';
+                }
 
                 statsGrid.innerHTML = [
                     statCard(__('stats.total_to_process'), stats.total || 0),
@@ -171,20 +171,6 @@
                         </div>
                     </article>
                 `).join('');
-
-                actionsList.innerHTML = (workspace.quick_actions || []).map((action) => `
-                    <article class="req-card">
-                        <div class="req-head">
-                            <strong>${action.label}</strong>
-                            <a class="btn ghost" href="${action.url}">${__('common.open')}</a>
-                        </div>
-                    </article>
-                `).join('');
-
-                focusList.innerHTML = (data.focus || []).map((item) => statCard(item.label, item.value || 0)).join('');
-                if (!focusList.innerHTML) {
-                    focusList.innerHTML = `<p class="hint">${__('agent.no_extra_indicator')}</p>`;
-                }
 
                 toProcessList.innerHTML = (data.a_traiter || []).map((item) => {
                     const nomEtudiant = item.etudiant

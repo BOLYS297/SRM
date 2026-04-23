@@ -155,6 +155,22 @@
                 const data = await response.json();
                 const etapes = data.etape_traitements || [];
                 const pieces = data.pieces_jointes || [];
+                const decision = data.decision;
+
+                const decisionHtml = decision
+                    ? `
+                        <div class="req-card" style="margin-bottom: 12px; background: ${decision.resultat === 'favorable' ? '#e8f5e8' : '#ffe8e8'};">
+                            <div class="req-head">
+                                <div>
+                                    <strong>${__('tracking.decision')}: ${formatDecision(decision.resultat)}</strong>
+                                    <div class="hint">${__('tracking.decision_date')}: ${formatDate(decision.date_decision)}</div>
+                                </div>
+                            </div>
+                            ${decision.motif ? `<div class="hint" style="margin-top: 8px;"><strong>${__('tracking.rejection_reason')}:</strong> ${escapeHtml(decision.motif)}</div>` : ''}
+                        </div>
+                    `
+                    : '';
+
                 const timelineHtml = etapes.length
                     ? `
                         <div class="timeline">
@@ -189,6 +205,7 @@
                     : `<div class="hint">${__('tracking.no_attachments')}</div>`;
 
                 panel.innerHTML = `
+                    ${decisionHtml}
                     <div>
                         <strong>${__('tracking.history')}</strong>
                         ${timelineHtml}

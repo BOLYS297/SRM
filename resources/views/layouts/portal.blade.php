@@ -4,6 +4,19 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>@yield('title', 'Portail SRM')</title>
+
+        {{-- PWA Meta Tags --}}
+        <meta name="theme-color" content="#ef6b3a">
+        <meta name="description" content="Système de Gestion des Requêtes Étudiantes - Soumettez et suivez vos demandes académiques">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="SRM">
+
+        {{-- Icons --}}
+        <link rel="manifest" href="/manifest.json">
+        <link rel="icon" type="image/png" href="/images/icons/icon-512">
+        <link rel="apple-touch-icon" href="/images/icons/apple-touch-icon.png">
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=space-grotesk:400,500,600,700|archivo:400,500,600" rel="stylesheet">
         <style>
@@ -403,6 +416,56 @@
                 }
             }
 
+            /* PWA Offline Styles */
+            body.is-offline {
+                opacity: 0.85;
+            }
+
+            body.is-offline::before {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: repeating-linear-gradient(
+                    90deg,
+                    #ef6b3a,
+                    #ef6b3a 10px,
+                    #a53d1b 10px,
+                    #a53d1b 20px
+                );
+                z-index: 9999;
+                animation: pulse 2s infinite;
+            }
+
+            .pill.offline {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                background: rgba(239, 107, 58, 0.15) !important;
+                color: #a53d1b !important;
+            }
+
+            .pill.offline::before {
+                content: '';
+                display: inline-block;
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: #ef6b3a;
+                animation: pulse 1.5s infinite;
+            }
+
+            @keyframes pulse {
+                0%, 100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.5;
+                }
+            }
+
             @media (max-width: 960px) {
                 .grid.two,
                 .form-grid.two {
@@ -422,9 +485,9 @@
         <header class="topbar">
            <a href={{route('home')}}
             <div class="brand">
-                <img src="{{asset('WhatsApp Image 2026-01-24 at 08.20.02.jpeg')}}" alt="logo" width="20%" height="20%">
+                <img src="{{ asset('WhatsApp Image 2026-01-24 at 08.20.02.jpeg') }}" alt="Logo IUT Douala" width="20%" height="20%">
                 <div>
-                    <span data-i18n="brand.title">Portail des requ&ecirc;tes</span>
+                    <span data-i18n="brand.title">SRM-Student Request Manager</span>
                     <small data-i18n="brand.subtitle">IUT Douala</small>
                 </div>
            </a>
@@ -439,9 +502,9 @@
                     <a href="/agent/services" data-role="agent" data-agent-feature="manage_services" data-i18n="nav.services">Services</a>
                     <a href="/agent/types" data-role="agent" data-agent-feature="manage_types" data-i18n="nav.types">Types</a>
                     <a href="/agent/agents" data-role="agent" data-agent-feature="manage_agents" data-i18n="nav.agents">Agents</a>
-                    <a href="/agent/etudiants" data-role="agent" data-agent-feature="manage_etudiants" data-i18n="nav.etudiants">&Eacute;tudiants</a>
+                    {{-- <a href="/agent/etudiants" data-role="agent" data-agent-feature="manage_etudiants" data-i18n="nav.etudiants">&Eacute;tudiants</a> --}}
                     <a href="/agent/historique" data-role="agent" data-agent-feature="process_etapes" data-i18n="nav.historique">Historique</a>
-                    <a href="/agent/decisions" data-role="agent" data-agent-feature="decision_finale" data-i18n="nav.decisions">D&eacute;cisions</a>
+                    {{-- <a href="/agent/decisions" data-role="agent" data-agent-feature="decision_finale" data-i18n="nav.decisions">D&eacute;cisions</a> --}}
                 </nav>
             @endif
             <div class="auth">
@@ -473,7 +536,7 @@
                     'action.validate': 'Valider',
                     'action.view_details': 'Voir les détails',
                     'agent.dashboard_subtitle': 'Vue détaillée des requêtes à traiter dans votre service.',
-                    'agent.dashboard_title': 'Tableau de bord des requêtes',
+                    'agent.dashboard_title': 'Espace ',
                     'agent.focus': 'Indicateurs cibles',
                     'agent.next_service': 'Service suivant',
                     'agent.no_extra_indicator': 'Aucun indicateur supplémentaire pour ce rôle.',
@@ -492,7 +555,7 @@
                     'auth.connected_service': 'Connecté ({service})',
                     'auth.offline': 'Hors ligne',
                     'brand.subtitle': 'IUT Douala',
-                    'brand.title': 'Portail des requêtes',
+                    'brand.title': 'SRM-Student Request Manager',
                     'btn.hide': 'Masquer',
                     'btn.logout': 'Déconnexion',
                     'btn.show': 'Afficher',
@@ -623,6 +686,7 @@
                     'tracking.all_services': 'Tous les services',
                     'tracking.attachments': 'Pièces jointes',
                     'tracking.decision': 'Décision',
+                    'tracking.decision_date': 'Date de décision',
                     'tracking.detail_error': 'Erreur de détail.',
                     'tracking.entry': 'Entrée',
                     'tracking.exit': 'Sortie',
@@ -631,6 +695,7 @@
                     'tracking.no_attachments': 'Aucune pièce jointe.',
                     'tracking.no_steps': 'Aucune étape enregistrée.',
                     'tracking.none_found': 'Aucune requête trouvée.',
+                    'tracking.rejection_reason': 'Motif du rejet',
                     'tracking.search': 'Recherche',
                     'tracking.search_placeholder': 'Objet ou type',
                     'tracking.service': 'Service',
@@ -653,7 +718,7 @@
                     'action.validate': 'Approve',
                     'action.view_details': 'View details',
                     'agent.dashboard_subtitle': 'Detailed view of requests to process in your service.',
-                    'agent.dashboard_title': 'Requests dashboard',
+                    'agent.dashboard_title': ' Dashboard',
                     'agent.focus': 'Target indicators',
                     'agent.next_service': 'Next service',
                     'agent.no_extra_indicator': 'No additional indicators for this role.',
@@ -672,7 +737,7 @@
                     'auth.connected_service': 'Online ({service})',
                     'auth.offline': 'Offline',
                     'brand.subtitle': 'IUT Douala',
-                    'brand.title': 'Requests Portal',
+                    'brand.title': 'SRM-Student Request Manager',
                     'btn.hide': 'Hide',
                     'btn.logout': 'Log out',
                     'btn.show': 'Show',
@@ -803,6 +868,7 @@
                     'tracking.all_services': 'All services',
                     'tracking.attachments': 'Attachments',
                     'tracking.decision': 'Decision',
+                    'tracking.decision_date': 'Decision date',
                     'tracking.detail_error': 'Detail loading error.',
                     'tracking.entry': 'Entry',
                     'tracking.exit': 'Exit',
@@ -811,6 +877,117 @@
                     'tracking.no_attachments': 'No attachment.',
                     'tracking.no_steps': 'No recorded step.',
                     'tracking.none_found': 'No requests found.',
+                    'tracking.rejection_reason': 'Rejection reason',
+                    'tracking.search': 'Search',
+                    'tracking.search_placeholder': 'Subject or type',
+                    'tracking.service': 'Service',
+                    'tracking.service_filter': 'Service filter',
+                    'tracking.status_filter': 'Status filter',
+                    'tracking.subtitle': 'Check status and details.',
+                    'tracking.tag': 'Tracking',
+                    'tracking.title': 'Status of my requests',
+                    'agent.workspace.courrier.title': 'Service courrier',
+                    'agent.workspace.courrier.description': 'Enregistre les nouvelles requêtes et les transmet au service suivant.',
+                    'agent.workspace.scolarite.title': 'Scolarité',
+                    'agent.workspace.scolarite.description': 'Finalise les dossiers et rend la décision finale.',
+                    'agent.workspace.conseil_orientation.title': 'Conseil orientation',
+                    'agent.workspace.conseil_orientation.description': 'Reçoit les dépôts et lance la première étape du circuit.',
+                    'agent.workspace.direction.title': 'Direction',
+                    'agent.workspace.direction.description': 'Valide et cote les requêtes avant orientation.',
+                    'agent.workspace.da.title': 'Direction adjointe',
+                    'agent.workspace.da.description': 'Cote les requêtes et les transfère vers les départements concernés.',
+                    'agent.workspace.departement.title': 'Département',
+                    'agent.workspace.departement.description': 'Examine les dossiers académiques avant correction technique.',
+                    'agent.workspace.cellule_info.title': 'Cellule informatique',
+                    'agent.workspace.cellule_info.description': 'Applique les corrections et renvoie le dossier à la scolarité.',
+                    'agent.workspace.enseignant.title': 'Enseignant',
+                    'agent.workspace.enseignant.description': 'Traite les requêtes pédagogiques transmises par le département.',
+                    'agent.workspace.autre.title': 'Espace agent',
+                    'agent.workspace.autre.description': 'Traite les requêtes assignées à votre service.',
+                },
+                en: {
+                    'app.name': 'SRM',
+                    'auth.offline': 'Offline',
+                    'auth.online': 'Online',
+                    'auth.login_error': 'Unable to login.',
+                    'common.error_loading': 'Loading error.',
+                    'common.open': 'Open',
+                    'common.saved': 'Saved.',
+                    'common.unknown': 'Unknown',
+                    'common.yes': 'Yes',
+                    'common.no': 'No',
+                    'action.login': 'Login',
+                    'action.refresh': 'Refresh',
+                    'action.validate': 'Validate',
+                    'action.reject': 'Reject',
+                    'agent.dashboard_title': 'Request dashboard',
+                    'agent.dashboard_subtitle': 'Detailed view of the requests assigned to your service.',
+                    'agent.service_load': 'Service load',
+                    'agent.stats': 'Statistics',
+                    'agent.to_process': 'Requests to process',
+                    'agent.tag': 'Agent',
+                    'agent.reject_reason_prompt': 'Enter the rejection reason',
+                    'agent.reject_reason_required': 'Rejection reason is required.',
+                    'agent.process_error': 'Unable to process request.',
+                    'agent.next_service': 'Next service',
+                    'agent.no_request_waiting': 'No requests waiting.',
+                    'agent.no_extra_indicator': 'No extra indicators.',
+                    'agent.requests_in_progress': 'requests in progress',
+                    'agent.workspace.courrier.title': 'Mail service',
+                    'agent.workspace.courrier.description': 'Registers new requests and forwards them to the next service.',
+                    'agent.workspace.scolarite.title': 'Registrar office',
+                    'agent.workspace.scolarite.description': 'Finalizes dossiers and issues the final decision.',
+                    'agent.workspace.conseil_orientation.title': 'Orientation council',
+                    'agent.workspace.conseil_orientation.description': 'Receives submissions and starts the first step of the workflow.',
+                    'agent.workspace.direction.title': 'Management',
+                    'agent.workspace.direction.description': 'Approves and grades requests before routing.',
+                    'agent.workspace.da.title': 'Deputy management',
+                    'agent.workspace.da.description': 'Grades requests and forwards them to the relevant departments.',
+                    'agent.workspace.departement.title': 'Department',
+                    'agent.workspace.departement.description': 'Reviews academic files before technical correction.',
+                    'agent.workspace.cellule_info.title': 'IT support',
+                    'agent.workspace.cellule_info.description': 'Applies corrections and returns the dossier to the registrar.',
+                    'agent.workspace.enseignant.title': 'Teacher',
+                    'agent.workspace.enseignant.description': 'Handles pedagogical requests forwarded by the department.',
+                    'agent.workspace.autre.title': 'Agent workspace',
+                    'agent.workspace.autre.description': 'Handles the requests assigned to your service.',
+                    'stats.total': 'Total',
+                    'stats.total_to_process': 'Total to process',
+                    'status.en_attente': 'Pending',
+                    'status.en_traitement': 'In progress',
+                    'status.rejetee': 'Rejected',
+                    'status.traitee': 'Processed',
+                    'student.dashboard_subtitle': 'Summary of your recent requests.',
+                    'student.dashboard_title': 'My dashboard',
+                    'student.identity': 'Student: {prenom} {nom} ({matricule})',
+                    'student.latest_requests': 'Latest requests',
+                    'student.no_recent_requests': 'No recent requests.',
+                    'student.stats': 'Statistics',
+                    'student.tag': 'Student',
+                    'students.account': 'Account',
+                    'students.account_created': 'Account created.',
+                    'students.account_error': 'Account creation error.',
+                    'students.choose_student': 'Choose a student.',
+                    'students.create_account': 'Create account',
+                    'students.list': 'Students list',
+                    'students.new': 'New student',
+                    'students.save_error': 'Save error.',
+                    'students.subtitle': 'Create a student and login account.',
+                    'students.title': 'Students',
+                    'tracking.all': 'All',
+                    'tracking.all_services': 'All services',
+                    'tracking.attachments': 'Attachments',
+                    'tracking.decision': 'Decision',
+                    'tracking.decision_date': 'Decision date',
+                    'tracking.detail_error': 'Detail loading error.',
+                    'tracking.entry': 'Entry',
+                    'tracking.exit': 'Exit',
+                    'tracking.history': 'History',
+                    'tracking.in_progress': 'In progress',
+                    'tracking.no_attachments': 'No attachment.',
+                    'tracking.no_steps': 'No recorded step.',
+                    'tracking.none_found': 'No requests found.',
+                    'tracking.rejection_reason': 'Rejection reason',
                     'tracking.search': 'Search',
                     'tracking.search_placeholder': 'Subject or type',
                     'tracking.service': 'Service',
@@ -822,6 +999,17 @@
                 },
             };
 
+            // Ensure I18N.en has all keys from I18N.fr
+            if (I18N.en) {
+                Object.keys(I18N.fr).forEach(key => {
+                    if (!(key in I18N.en)) {
+                        I18N.en[key] = I18N.fr[key];
+                    }
+                });
+            } else {
+                I18N.en = { ...I18N.fr };
+            }
+
             function getLang() {
                 return localStorage.getItem('ui_lang') === 'en' ? 'en' : 'fr';
             }
@@ -829,6 +1017,7 @@
             function setLang(lang) {
                 const normalized = lang === 'en' ? 'en' : 'fr';
                 localStorage.setItem('ui_lang', normalized);
+                console.log('Language set to:', normalized);
                 applyI18n();
                 window.dispatchEvent(new Event('srm:language-changed'));
             }
@@ -838,6 +1027,7 @@
                 const dict = I18N[lang] || I18N.fr;
                 const fallback = I18N.fr[key] ?? key;
                 let value = dict[key] ?? fallback;
+                console.log('__ called for key:', key, 'lang:', lang, 'dict[key]:', dict[key], 'fallback:', fallback, 'result:', value);
                 Object.keys(vars).forEach((name) => {
                     value = value.replaceAll(`{${name}}`, String(vars[name] ?? ''));
                 });
@@ -845,12 +1035,16 @@
             }
 
             function applyI18n(root = document) {
+                console.log('Applying i18n for lang:', getLang());
+                console.log('I18N.en has nav.dashboard:', I18N.en && 'nav.dashboard' in I18N.en);
                 document.documentElement.lang = getLang();
 
                 root.querySelectorAll('[data-i18n]').forEach((element) => {
                     const key = element.getAttribute('data-i18n');
                     if (!key) return;
-                    element.textContent = __(key);
+                    const translated = __(key);
+                    console.log('Translating', key, 'to', translated);
+                    element.textContent = translated;
                 });
 
                 root.querySelectorAll('[data-i18n-placeholder]').forEach((element) => {
@@ -1151,6 +1345,159 @@
                     });
                 }
             });
+
+            // ============================================
+            // SERVICE WORKER REGISTRATION
+            // ============================================
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', async () => {
+                    try {
+                        const registration = await navigator.serviceWorker.register('/sw.js');
+                        console.log('[APP] Service Worker registered successfully:', registration);
+
+                        // Listen for updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            console.log('[APP] Service Worker update available');
+
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'activated') {
+                                    console.log('[APP] New Service Worker activated');
+                                    // Optional: Show update notification to user
+                                    notifyUserAboutUpdate();
+                                }
+                            });
+                        });
+
+                        // Check for updates periodically
+                        setInterval(() => {
+                            registration.update().catch((error) => {
+                                console.log('[APP] Failed to check for SW updates:', error);
+                            });
+                        }, 60000); // Check every minute
+
+                        // Listen for messages from Service Worker
+                        navigator.serviceWorker.addEventListener('message', (event) => {
+                            const { type, data } = event.data;
+                            console.log('[APP] Message from SW:', type, data);
+
+                            if (type === 'CACHE_CLEARED') {
+                                console.log('[APP] Cache was cleared by SW');
+                            }
+
+                            if (type === 'SYNC_COMPLETE') {
+                                console.log('[APP] Background sync completed');
+                                window.dispatchEvent(new CustomEvent('srm:sync-complete', { detail: data }));
+                            }
+                        });
+
+                    } catch (error) {
+                        console.error('[APP] Service Worker registration failed:', error);
+                    }
+                });
+            } else {
+                console.warn('[APP] Service Workers not supported in this browser');
+            }
+
+            // ============================================
+            // OFFLINE DETECTION
+            // ============================================
+            window.addEventListener('online', () => {
+                console.log('[APP] Connection restored');
+                document.body.classList.remove('is-offline');
+
+                // Notify user
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification('SRM', {
+                        body: 'Vous êtes de nouveau connecté à Internet',
+                        icon: '/images/icons/icon-192x192.png',
+                    });
+                }
+            });
+
+            window.addEventListener('offline', () => {
+                console.log('[APP] Connection lost');
+                document.body.classList.add('is-offline');
+            });
+
+            // Set initial offline state
+            if (!navigator.onLine) {
+                document.body.classList.add('is-offline');
+            }
+
+            // ============================================
+            // PWA INSTALL PROMPT
+            // ============================================
+            let installPrompt;
+
+            window.addEventListener('beforeinstallprompt', (event) => {
+                console.log('[APP] beforeinstallprompt event triggered');
+                // Prevent the mini-infobar from appearing on mobile
+                event.preventDefault();
+                // Store the event for later use
+                installPrompt = event;
+                // Show install button if not already installed
+                showInstallButton();
+            });
+
+            window.addEventListener('appinstalled', () => {
+                console.log('[APP] PWA was installed');
+                hideInstallButton();
+                installPrompt = null;
+            });
+
+            function showInstallButton() {
+                const btn = document.getElementById('install-pwa-btn');
+                if (btn) {
+                    btn.style.display = 'flex';
+                    btn.addEventListener('click', async () => {
+                        if (installPrompt) {
+                            installPrompt.prompt();
+                            const { outcome } = await installPrompt.userChoice;
+                            console.log(`[APP] User response: ${outcome}`);
+                            installPrompt = null;
+                            hideInstallButton();
+                        }
+                    });
+                }
+            }
+
+            function hideInstallButton() {
+                const btn = document.getElementById('install-pwa-btn');
+                if (btn) {
+                    btn.style.display = 'none';
+                }
+            }
+
+            // ============================================
+            // NOTIFICATION PERMISSION REQUEST
+            // ============================================
+            if ('Notification' in window && Notification.permission === 'default') {
+                // Only request once per session
+                if (!sessionStorage.getItem('notification-prompt-shown')) {
+                    setTimeout(() => {
+                        Notification.requestPermission().then((permission) => {
+                            console.log('[APP] Notification permission:', permission);
+                            sessionStorage.setItem('notification-prompt-shown', 'true');
+                        });
+                    }, 3000); // Wait 3 seconds before prompting
+                }
+            }
+
+            // ============================================
+            // HELPER FUNCTION - Notify about update
+            // ============================================
+            function notifyUserAboutUpdate() {
+                const notification = document.createElement('div');
+                notification.className = 'pwa-update-notification';
+                notification.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #1f7a6c; color: white; border-radius: 8px; margin: 12px; font-size: 14px;">
+                        <span>✓ Une nouvelle version est disponible</span>
+                        <button onclick="window.location.reload()" style="background: #ef6b3a; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">Recharger</button>
+                    </div>
+                `;
+                document.body.insertBefore(notification, document.body.firstChild);
+            }
         </script>
 
         @stack('scripts')

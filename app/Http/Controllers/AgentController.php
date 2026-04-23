@@ -34,7 +34,7 @@ class AgentController extends Controller
             'password' => Hash::make($data['password']),
             'role' => 'agent',
             'service_id' => $data['service_id'],
-            'etudiant_id' => null,
+            'etudiant_id' => null
         ]);
 
         return response()->json($agent, 201);

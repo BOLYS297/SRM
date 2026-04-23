@@ -3,7 +3,15 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#ef6b3a">
+    <meta name="description" content="Plateforme de gestion des requêtes académiques">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SRM">
     <title>Accueil | SRM IUT Douala</title>
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/icons/icon-192x192.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/icons/apple-touch-icon.png') }}">
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=space-grotesk:400,500,600,700|archivo:400,500,600" rel="stylesheet">
     <style>
@@ -311,7 +319,6 @@
 <section class="hero">
     <div class="hero-shell">
         <header class="topbar">
-            <a href="{{ route('home') }}" ">
                 <div class="brand">
                     <img src="{{ asset('WhatsApp Image 2026-01-24 at 08.20.02.jpeg') }}" alt="Logo IUT Douala">
                     <div>
@@ -319,10 +326,10 @@
                         <span data-i18n="brand.desc">Application de gestion des requêtes étudiantes de l'IUT de Douala.</span>
                     </div>
                 </div>
-            </a>
+
             <div class="top-actions">
                 <button id="langToggle" type="button" class="btn lang">FR | EN</button>
-                <a class="btn primary" href="{{ route('login') }}" data-i18n="cta.login">Se connecter</a>
+                <a id="ctaBtn" class="btn primary" href="{{ route('login') }}" data-i18n="cta.login">Se connecter</a>
             </div>
         </header>
 
@@ -380,12 +387,13 @@
             </div>
 
             <div class="chip-list">
-                <span>Certificat de scolarité</span>
-                <span>Duplicata</span>
-                <span>Syllabus</span>
-                <span>Correction d'identité</span>
-                <span>Absence note CC</span>
-                <span>Anomalies PV</span>
+                <span data-i18n="request.type1">Certificat de scolarité</span>
+                <span data-i18n="request.type2">Duplicata</span>
+                <span data-i18n="request.type3">Syllabus</span>
+                <span data-i18n="request.type4">Correction d'identité</span>
+                <span data-i18n="request.type5">Absence note CC</span>
+                <span data-i18n="request.type6">Anomalies PV</span>
+                <span data-i18n="request.type7">Autre</span>
             </div>
         </article>
     </div>
@@ -399,6 +407,7 @@
             'brand.title': 'SRM - Student Request Manager',
             'brand.desc': "Application de gestion des requêtes étudiantes de l'IUT de Douala.",
             'cta.login': 'Se connecter',
+            'cta.dashboard': 'Tableau de bord',
             'hero.title': 'La gestion des requêtes étudiantes, enfin fluide et moderne.',
             'hero.text': "Le SRM digitalise tout le parcours d'une requête : dépôt, orientation automatique vers le bon service, traitement par les agents concernés, historique des actions et décision finale notifiée à l'étudiant. Un circuit fiable, lisible et rapide pour toute la communauté de l'IUT de Douala.",
             'metrics.title': 'Chiffres clés de la plateforme',
@@ -430,12 +439,20 @@
             'principles.3d': 'chaque action est datée (entrée/sortie).',
             'principles.4t': 'Objectif qualité :',
             'principles.4d': 'délai cible de traitement fixé à 72h.',
+            'request.type1': 'Certificat de scolarité',
+            'request.type2': 'Duplicata',
+            'request.type3': 'Syllabus',
+            'request.type4': 'Correction d\'identité',
+            'request.type5': 'Absence note CC',
+            'request.type6': 'Anomalies PV',
+            'request.type7': 'Autre',
             'footer': 'Système de Requêtes Étudiantes - IUT de Douala'
         },
         en: {
             'brand.title': 'SRM - Student Request Manager',
             'brand.desc': 'Student request management application for IUT Douala.',
             'cta.login': 'Log in',
+            'cta.dashboard': 'Dashboard',
             'hero.title': 'Student request management, finally smooth and modern.',
             'hero.text': 'SRM digitizes the full lifecycle of a request: submission, automatic routing to the right service, processing by the relevant agents, full action history, and final decision sent to the student. A reliable and fast workflow for the whole IUT Douala community.',
             'metrics.title': 'Platform key figures',
@@ -467,6 +484,13 @@
             'principles.3d': 'every action is timestamped (entry/exit).',
             'principles.4t': 'Quality target:',
             'principles.4d': 'processing target set to 72 hours.',
+            'request.type1': 'school certificate',
+            'request.type2': 'duplicate',
+            'request.type3': 'syllabus',
+            'request.type4': 'identity correction',
+            'request.type5': 'absence in CC grade',
+            'request.type6': 'PV anomalies',
+            'request.type7': 'Other',
             'footer': 'Student Request Management System - IUT Douala'
         }
     };
@@ -485,6 +509,31 @@
         return (I18N[lang] && I18N[lang][key]) || (I18N.fr[key] || key);
     }
 
+    function getToken() {
+        return localStorage.getItem('api_token');
+    }
+
+    function getRole() {
+        return localStorage.getItem('user_role');
+    }
+
+    function updateCTAButton() {
+        const btn = document.getElementById('ctaBtn');
+        if (!btn) return;
+        const token = getToken();
+        const role = getRole();
+        if (token && role) {
+            const dashboardUrl = role === 'agent' ? '/agent/dashboard' : '/etudiant/dashboard';
+            btn.href = dashboardUrl;
+            btn.textContent = t('cta.dashboard');
+            btn.setAttribute('data-i18n', 'cta.dashboard');
+        } else {
+            btn.href = '/connexion';
+            btn.textContent = t('cta.login');
+            btn.setAttribute('data-i18n', 'cta.login');
+        }
+    }
+
     function applyTranslations() {
         const lang = getLang();
         document.documentElement.lang = lang;
@@ -498,6 +547,8 @@
             toggle.textContent = lang === 'fr' ? 'FR | EN' : 'EN | FR';
             toggle.title = lang === 'fr' ? 'Switch to English' : 'Passer en français';
         }
+
+        updateCTAButton();
     }
 
     document.addEventListener('DOMContentLoaded', () => {
