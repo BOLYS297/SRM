@@ -7,6 +7,7 @@
 
         {{-- PWA Meta Tags --}}
         <meta name="theme-color" content="#ef6b3a">
+        <meta name="vapid-public-key" content="{{ config('webpush.vapid.public_key') }}">
         <meta name="description" content="Système de Gestion des Requêtes Étudiantes - Soumettez et suivez vos demandes académiques">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
@@ -416,6 +417,11 @@
                 }
             }
 
+            /* Hide role-based nav links until JS determines the role (prevents flicker) */
+            .nav-hidden {
+                display: none !important;
+            }
+
             /* PWA Offline Styles */
             body.is-offline {
                 opacity: 0.85;
@@ -483,33 +489,31 @@
         @php($hideNav = $hideNav ?? false)
         <div class="ambient"></div>
         <header class="topbar">
-           <a href={{route('home')}}
-            <div class="brand">
+            <a href="{{ route('home') }}" class="brand" style="text-decoration: none;">
                 <img src="{{ asset('WhatsApp Image 2026-01-24 at 08.20.02.jpeg') }}" alt="Logo IUT Douala" width="20%" height="20%">
                 <div>
                     <span data-i18n="brand.title">SRM-Student Request Manager</span>
                     <small data-i18n="brand.subtitle">IUT Douala</small>
                 </div>
-           </a>
-            </div>
+            </a>
             @if (!$hideNav)
                 <nav class="nav">
-                    <a href="/agent/dashboard" data-role="agent" data-agent-feature="dashboard" data-i18n="nav.dashboard">Tableau de bord</a>
-                    <a href="/etudiant/dashboard" data-role="etudiant" data-i18n="nav.dashboard">Tableau de bord</a>
-                    <a href="/requetes/depot" data-role="etudiant" data-i18n="nav.depot">D&eacute;p&ocirc;t</a>
-                    <a href="/requetes/suivi" data-role="etudiant" data-i18n="nav.suivi">Suivi</a>
-                    <a href="/profil" data-role="etudiant" data-i18n="nav.profil">Profil</a>
-                    <a href="/agent/services" data-role="agent" data-agent-feature="manage_services" data-i18n="nav.services">Services</a>
-                    <a href="/agent/types" data-role="agent" data-agent-feature="manage_types" data-i18n="nav.types">Types</a>
-                    <a href="/agent/agents" data-role="agent" data-agent-feature="manage_agents" data-i18n="nav.agents">Agents</a>
-                    {{-- <a href="/agent/etudiants" data-role="agent" data-agent-feature="manage_etudiants" data-i18n="nav.etudiants">&Eacute;tudiants</a> --}}
-                    <a href="/agent/historique" data-role="agent" data-agent-feature="process_etapes" data-i18n="nav.historique">Historique</a>
-                    {{-- <a href="/agent/decisions" data-role="agent" data-agent-feature="decision_finale" data-i18n="nav.decisions">D&eacute;cisions</a> --}}
+                    <a href="/agent/dashboard" class="nav-hidden" data-role="agent" data-agent-feature="dashboard" data-i18n="nav.dashboard">Tableau de bord</a>
+                    <a href="/etudiant/dashboard" class="nav-hidden" data-role="etudiant" data-i18n="nav.dashboard">Tableau de bord</a>
+                    <a href="/requetes/depot" class="nav-hidden" data-role="etudiant" data-i18n="nav.depot">D&eacute;p&ocirc;t</a>
+                    <a href="/requetes/suivi" class="nav-hidden" data-role="etudiant" data-i18n="nav.suivi">Suivi</a>
+                    <a href="/profil" class="nav-hidden" data-role="etudiant" data-i18n="nav.profil">Profil</a>
+                    <a href="/agent/services" class="nav-hidden" data-role="agent" data-agent-feature="manage_services" data-i18n="nav.services">Services</a>
+                    <a href="/agent/types" class="nav-hidden" data-role="agent" data-agent-feature="manage_types" data-i18n="nav.types">Types</a>
+                    <a href="/agent/agents" class="nav-hidden" data-role="agent" data-agent-feature="manage_agents" data-i18n="nav.agents">Agents</a>
+                    {{-- <a href="/agent/etudiants" class="nav-hidden" data-role="agent" data-agent-feature="manage_etudiants" data-i18n="nav.etudiants">&Eacute;tudiants</a> --}}
+                    <a href="/agent/historique" class="nav-hidden" data-role="agent" data-agent-feature="process_etapes" data-i18n="nav.historique">Historique</a>
+                    {{-- <a href="/agent/decisions" class="nav-hidden" data-role="agent" data-agent-feature="decision_finale" data-i18n="nav.decisions">D&eacute;cisions</a> --}}
                 </nav>
             @endif
             <div class="auth">
                 <button id="langToggleBtn" class="btn lang-switch" type="button" data-i18n-title="lang.toggle_title" title="Changer de langue">FR | EN</button>
-                <span id="authState" class="pill offline" data-i18n="auth.offline">Hors ligne</span>
+                
                 <button id="logoutBtn" class="btn ghost" data-i18n="btn.logout">D&eacute;connexion</button>
             </div>
         </header>
@@ -532,10 +536,12 @@
                     'action.refresh': 'Actualiser',
                     'action.reject': 'Rejeter',
                     'action.save': 'Enregistrer',
+                    'action.submit_registration': 'Soumettre l\'inscription',
                     'action.submit_request': 'Déposer la requête',
                     'action.validate': 'Valider',
                     'action.view_details': 'Voir les détails',
-                    'agent.dashboard_subtitle': 'Vue détaillée des requêtes à traiter dans votre service.',
+                    'agent.alumni_validation': 'Validation des inscriptions d\'anciens étudiants',
+                    'agent.no_alumni_pending': 'Aucune inscription d\'ancien étudiant en attente de validation.',
                     'agent.dashboard_title': 'Espace ',
                     'agent.focus': 'Indicateurs cibles',
                     'agent.next_service': 'Service suivant',
@@ -553,7 +559,7 @@
                     'auth.connected': 'Connecté',
                     'auth.connected_role': 'Connecté ({role})',
                     'auth.connected_service': 'Connecté ({service})',
-                    'auth.offline': 'Hors ligne',
+                    'auth.offline': '',
                     'brand.subtitle': 'IUT Douala',
                     'brand.title': 'SRM-Student Request Manager',
                     'btn.hide': 'Masquer',
@@ -591,7 +597,7 @@
                     'depot.title': 'Nouvelle requête',
                     'field.academic_year': 'Année de dépôt',
                     'field.account_name_optional': 'Nom du compte (optionnel)',
-                    'field.attachment_optional': 'Pièce jointe (optionnelle)',
+                    'field.attachment_optional': 'Pièces jointes (optionnelles)',
                     'field.birth_date': 'Date de naissance',
                     'field.department': 'Filière',
                     'field.deposit_date': 'Date de dépôt',
@@ -625,10 +631,23 @@
                     'login.form_hint': 'Utilise le compte créé par ton service.',
                     'login.form_title': 'Connexion',
                     'login.invalid_credentials': 'Identifiants invalides.',
+                    'login.no_account': 'Ancien étudiant non inscrit ?',
+                    'login.register_link': 'Créer un compte',
                     'login.subtitle': 'Dépose une requête, suis son parcours et reçois une décision dans le délai cible.',
                     'login.tag': 'Plateforme officielle',
                     'login.title': 'Portail des requêtes étudiantes',
                     'nav.agents': 'Agents',
+                    'register.back_login': 'Retour à la connexion',
+                    'register.form_hint': 'Veuillez renseigner des informations exactes pour faciliter la validation.',
+                    'register.form_title': 'Créer mon compte',
+                    'register.info_1': '- Remplissez correctement vos informations académiques et personnelles.',
+                    'register.info_2': '- À la soumission, votre compte sera créé en état inactif (désactivé).',
+                    'register.info_3': '- Les membres de la cellule informatique vérifieront vos données (concordance du matricule, nom, filière, ...).',
+                    'register.info_4': '- Une fois validé, vous recevrez l\'accès pour déposer et suivre vos requêtes.',
+                    'register.info_title': 'Processus de validation',
+                    'register.subtitle': 'Cette section est dédiée aux anciens étudiants de l\'IUT de Douala non pré-inscrits.',
+                    'register.tag': 'Espace Anciens Élèves',
+                    'register.title': 'Rejoindre la plateforme SRM',
                     'nav.dashboard': 'Tableau de bord',
                     'nav.decisions': 'Décisions',
                     'nav.depot': 'Dépôt',
@@ -714,9 +733,12 @@
                     'action.refresh': 'Refresh',
                     'action.reject': 'Reject',
                     'action.save': 'Save',
+                    'action.submit_registration': 'Submit registration',
                     'action.submit_request': 'Submit request',
                     'action.validate': 'Approve',
                     'action.view_details': 'View details',
+                    'agent.alumni_validation': 'Alumni registration validation',
+                    'agent.no_alumni_pending': 'No pending alumni registrations for validation.',
                     'agent.dashboard_subtitle': 'Detailed view of requests to process in your service.',
                     'agent.dashboard_title': ' Dashboard',
                     'agent.focus': 'Target indicators',
@@ -773,7 +795,7 @@
                     'depot.title': 'New request',
                     'field.academic_year': 'Academic year',
                     'field.account_name_optional': 'Account name (optional)',
-                    'field.attachment_optional': 'Attachment (optional)',
+                    'field.attachment_optional': 'Attachments (optional)',
                     'field.birth_date': 'Birth date',
                     'field.department': 'Major',
                     'field.deposit_date': 'Deposit date',
@@ -807,10 +829,23 @@
                     'login.form_hint': 'Use the account created by your service.',
                     'login.form_title': 'Sign in',
                     'login.invalid_credentials': 'Invalid credentials.',
+                    'login.no_account': 'Former student not registered?',
+                    'login.register_link': 'Create an account',
                     'login.subtitle': 'Submit a request, track its route and receive a decision within the target delay.',
                     'login.tag': 'Official platform',
                     'login.title': 'Student requests portal',
                     'nav.agents': 'Agents',
+                    'register.back_login': 'Back to sign in',
+                    'register.form_hint': 'Please provide accurate information to facilitate validation.',
+                    'register.form_title': 'Create my account',
+                    'register.info_1': '- Fill in your academic and personal information accurately.',
+                    'register.info_2': '- Upon submission, your account will be created in an inactive (disabled) state.',
+                    'register.info_3': '- IT support members will verify your data (student ID, name, major, etc.).',
+                    'register.info_4': '- Once validated, you will receive access to submit and track your requests.',
+                    'register.info_title': 'Validation process',
+                    'register.subtitle': 'This section is dedicated to former IUT Douala students who are not pre-registered.',
+                    'register.tag': 'Alumni Space',
+                    'register.title': 'Join the SRM platform',
                     'nav.dashboard': 'Dashboard',
                     'nav.decisions': 'Decisions',
                     'nav.depot': 'Submit',
@@ -886,53 +921,6 @@
                     'tracking.subtitle': 'Check status and details.',
                     'tracking.tag': 'Tracking',
                     'tracking.title': 'Status of my requests',
-                    'agent.workspace.courrier.title': 'Service courrier',
-                    'agent.workspace.courrier.description': 'Enregistre les nouvelles requêtes et les transmet au service suivant.',
-                    'agent.workspace.scolarite.title': 'Scolarité',
-                    'agent.workspace.scolarite.description': 'Finalise les dossiers et rend la décision finale.',
-                    'agent.workspace.conseil_orientation.title': 'Conseil orientation',
-                    'agent.workspace.conseil_orientation.description': 'Reçoit les dépôts et lance la première étape du circuit.',
-                    'agent.workspace.direction.title': 'Direction',
-                    'agent.workspace.direction.description': 'Valide et cote les requêtes avant orientation.',
-                    'agent.workspace.da.title': 'Direction adjointe',
-                    'agent.workspace.da.description': 'Cote les requêtes et les transfère vers les départements concernés.',
-                    'agent.workspace.departement.title': 'Département',
-                    'agent.workspace.departement.description': 'Examine les dossiers académiques avant correction technique.',
-                    'agent.workspace.cellule_info.title': 'Cellule informatique',
-                    'agent.workspace.cellule_info.description': 'Applique les corrections et renvoie le dossier à la scolarité.',
-                    'agent.workspace.enseignant.title': 'Enseignant',
-                    'agent.workspace.enseignant.description': 'Traite les requêtes pédagogiques transmises par le département.',
-                    'agent.workspace.autre.title': 'Espace agent',
-                    'agent.workspace.autre.description': 'Traite les requêtes assignées à votre service.',
-                },
-                en: {
-                    'app.name': 'SRM',
-                    'auth.offline': 'Offline',
-                    'auth.online': 'Online',
-                    'auth.login_error': 'Unable to login.',
-                    'common.error_loading': 'Loading error.',
-                    'common.open': 'Open',
-                    'common.saved': 'Saved.',
-                    'common.unknown': 'Unknown',
-                    'common.yes': 'Yes',
-                    'common.no': 'No',
-                    'action.login': 'Login',
-                    'action.refresh': 'Refresh',
-                    'action.validate': 'Validate',
-                    'action.reject': 'Reject',
-                    'agent.dashboard_title': 'Request dashboard',
-                    'agent.dashboard_subtitle': 'Detailed view of the requests assigned to your service.',
-                    'agent.service_load': 'Service load',
-                    'agent.stats': 'Statistics',
-                    'agent.to_process': 'Requests to process',
-                    'agent.tag': 'Agent',
-                    'agent.reject_reason_prompt': 'Enter the rejection reason',
-                    'agent.reject_reason_required': 'Rejection reason is required.',
-                    'agent.process_error': 'Unable to process request.',
-                    'agent.next_service': 'Next service',
-                    'agent.no_request_waiting': 'No requests waiting.',
-                    'agent.no_extra_indicator': 'No extra indicators.',
-                    'agent.requests_in_progress': 'requests in progress',
                     'agent.workspace.courrier.title': 'Mail service',
                     'agent.workspace.courrier.description': 'Registers new requests and forwards them to the next service.',
                     'agent.workspace.scolarite.title': 'Registrar office',
@@ -951,51 +939,6 @@
                     'agent.workspace.enseignant.description': 'Handles pedagogical requests forwarded by the department.',
                     'agent.workspace.autre.title': 'Agent workspace',
                     'agent.workspace.autre.description': 'Handles the requests assigned to your service.',
-                    'stats.total': 'Total',
-                    'stats.total_to_process': 'Total to process',
-                    'status.en_attente': 'Pending',
-                    'status.en_traitement': 'In progress',
-                    'status.rejetee': 'Rejected',
-                    'status.traitee': 'Processed',
-                    'student.dashboard_subtitle': 'Summary of your recent requests.',
-                    'student.dashboard_title': 'My dashboard',
-                    'student.identity': 'Student: {prenom} {nom} ({matricule})',
-                    'student.latest_requests': 'Latest requests',
-                    'student.no_recent_requests': 'No recent requests.',
-                    'student.stats': 'Statistics',
-                    'student.tag': 'Student',
-                    'students.account': 'Account',
-                    'students.account_created': 'Account created.',
-                    'students.account_error': 'Account creation error.',
-                    'students.choose_student': 'Choose a student.',
-                    'students.create_account': 'Create account',
-                    'students.list': 'Students list',
-                    'students.new': 'New student',
-                    'students.save_error': 'Save error.',
-                    'students.subtitle': 'Create a student and login account.',
-                    'students.title': 'Students',
-                    'tracking.all': 'All',
-                    'tracking.all_services': 'All services',
-                    'tracking.attachments': 'Attachments',
-                    'tracking.decision': 'Decision',
-                    'tracking.decision_date': 'Decision date',
-                    'tracking.detail_error': 'Detail loading error.',
-                    'tracking.entry': 'Entry',
-                    'tracking.exit': 'Exit',
-                    'tracking.history': 'History',
-                    'tracking.in_progress': 'In progress',
-                    'tracking.no_attachments': 'No attachment.',
-                    'tracking.no_steps': 'No recorded step.',
-                    'tracking.none_found': 'No requests found.',
-                    'tracking.rejection_reason': 'Rejection reason',
-                    'tracking.search': 'Search',
-                    'tracking.search_placeholder': 'Subject or type',
-                    'tracking.service': 'Service',
-                    'tracking.service_filter': 'Service filter',
-                    'tracking.status_filter': 'Status filter',
-                    'tracking.subtitle': 'Check status and details.',
-                    'tracking.tag': 'Tracking',
-                    'tracking.title': 'Status of my requests',
                 },
             };
 
@@ -1017,7 +960,6 @@
             function setLang(lang) {
                 const normalized = lang === 'en' ? 'en' : 'fr';
                 localStorage.setItem('ui_lang', normalized);
-                console.log('Language set to:', normalized);
                 applyI18n();
                 window.dispatchEvent(new Event('srm:language-changed'));
             }
@@ -1027,7 +969,6 @@
                 const dict = I18N[lang] || I18N.fr;
                 const fallback = I18N.fr[key] ?? key;
                 let value = dict[key] ?? fallback;
-                console.log('__ called for key:', key, 'lang:', lang, 'dict[key]:', dict[key], 'fallback:', fallback, 'result:', value);
                 Object.keys(vars).forEach((name) => {
                     value = value.replaceAll(`{${name}}`, String(vars[name] ?? ''));
                 });
@@ -1035,16 +976,23 @@
             }
 
             function applyI18n(root = document) {
-                console.log('Applying i18n for lang:', getLang());
-                console.log('I18N.en has nav.dashboard:', I18N.en && 'nav.dashboard' in I18N.en);
                 document.documentElement.lang = getLang();
 
                 root.querySelectorAll('[data-i18n]').forEach((element) => {
                     const key = element.getAttribute('data-i18n');
                     if (!key) return;
-                    const translated = __(key);
-                    console.log('Translating', key, 'to', translated);
-                    element.textContent = translated;
+                    // Use textContent only if no child elements, otherwise use firstChild to avoid breaking icons
+                    if (element.children.length === 0) {
+                        element.textContent = __(key);
+                    } else {
+                        // Find and update the first text node
+                        for (const node of element.childNodes) {
+                            if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+                                node.textContent = __(key);
+                                break;
+                            }
+                        }
+                    }
                 });
 
                 root.querySelectorAll('[data-i18n-placeholder]').forEach((element) => {
@@ -1236,26 +1184,13 @@
             }
 
             function updateAuthUI() {
-                const state = document.getElementById('authState');
                 const logoutBtn = document.getElementById('logoutBtn');
+                if (!logoutBtn) return;
                 const token = getToken();
-                const role = getRole();
-                const serviceNom = getServiceNom();
-                if (!state || !logoutBtn) return;
-
                 if (token) {
-                    if (role === 'agent' && serviceNom) {
-                        state.textContent = __('auth.connected_service', { service: serviceNom });
-                    } else if (role) {
-                        state.textContent = __('auth.connected_role', { role: __(`role.${role}`) });
-                    } else {
-                        state.textContent = __('auth.connected');
-                    }
-                    state.classList.remove('offline');
                     logoutBtn.classList.remove('hidden');
+                    logoutBtn.textContent = __('btn.logout');
                 } else {
-                    state.textContent = __('auth.offline');
-                    state.classList.add('offline');
                     logoutBtn.classList.add('hidden');
                 }
             }
@@ -1265,21 +1200,24 @@
                 const token = getToken();
                 document.querySelectorAll('[data-role]').forEach((link) => {
                     const allowed = link.getAttribute('data-role');
-                    if (!allowed) return;
+                    if (!allowed) {
+                        link.classList.remove('nav-hidden');
+                        return;
+                    }
                     if (!role || !token) {
-                        link.classList.add('hidden');
+                        link.classList.add('nav-hidden');
                         return;
                     }
                     const roles = allowed.split(',').map((value) => value.trim());
                     if (roles.includes(role)) {
                         const feature = link.getAttribute('data-agent-feature');
                         if (role === 'agent' && feature && !hasAgentFeature(feature)) {
-                            link.classList.add('hidden');
+                            link.classList.add('nav-hidden');
                             return;
                         }
-                        link.classList.remove('hidden');
+                        link.classList.remove('nav-hidden');
                     } else {
-                        link.classList.add('hidden');
+                        link.classList.add('nav-hidden');
                     }
                 });
             }
@@ -1347,6 +1285,20 @@
             });
 
             // ============================================
+            // PUSH: base64url (clé VAPID) -> Uint8Array
+            // ============================================
+            function urlBase64ToUint8Array(base64String) {
+                const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+                const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+                const rawData = atob(base64);
+                const outputArray = new Uint8Array(rawData.length);
+                for (let i = 0; i < rawData.length; ++i) {
+                    outputArray[i] = rawData.charCodeAt(i);
+                }
+                return outputArray;
+            }
+
+            // ============================================
             // SERVICE WORKER REGISTRATION
             // ============================================
             if ('serviceWorker' in navigator) {
@@ -1354,6 +1306,47 @@
                     try {
                         const registration = await navigator.serviceWorker.register('/sw.js');
                         console.log('[APP] Service Worker registered successfully:', registration);
+
+                        // ============================================
+                        // PUSH NOTIFICATION SUBSCRIPTION
+                        // ============================================
+                        try {
+                            const vapidKey = document
+                                .querySelector('meta[name="vapid-public-key"]')
+                                ?.getAttribute('content');
+
+                            if ('PushManager' in window && 'Notification' in window && vapidKey && getToken()) {
+                                let permission = Notification.permission;
+                                if (permission === 'default') {
+                                    permission = await Notification.requestPermission();
+                                }
+
+                                if (permission === 'granted') {
+                                    // pushManager.subscribe exige un service worker actif
+                                    const readyRegistration = await navigator.serviceWorker.ready;
+                                    let subscription = await readyRegistration.pushManager.getSubscription();
+                                    if (!subscription) {
+                                        subscription = await readyRegistration.pushManager.subscribe({
+                                            userVisibleOnly: true,
+                                            applicationServerKey: urlBase64ToUint8Array(vapidKey),
+                                        });
+                                    }
+
+                                    const pushResponse = await apiFetch('/push-subscribe', {
+                                        method: 'POST',
+                                        body: JSON.stringify(subscription),
+                                    });
+
+                                    if (pushResponse.ok) {
+                                        console.log('[APP] Abonnement push enregistré côté serveur');
+                                    } else {
+                                        console.warn('[APP] Échec enregistrement abonnement push:', pushResponse.status);
+                                    }
+                                }
+                            }
+                        } catch (pushError) {
+                            console.warn('[APP] Push subscription failed:', pushError);
+                        }
 
                         // Listen for updates
                         registration.addEventListener('updatefound', () => {
